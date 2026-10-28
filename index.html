@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Sensor Monitoring & Servo Control System</title>
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Application Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Chart.js for Interactive Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Firebase Compat Libraries for Direct Static Hosting -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- ====================================================================
+         SIDEBAR NAVIGATION
+         ==================================================================== -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        </div>
+        <div class="sidebar-brand-info">
+          <h1>IoT Monitor</h1>
+          <span>ESP32 Telemetry</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="9" rx="1"/>
+            <rect x="14" y="3" width="7" height="5" rx="1"/>
+            <rect x="14" y="12" width="7" height="9" rx="1"/>
+            <rect x="3" y="16" width="7" height="5" rx="1"/>
+          </svg>
+          Main Dashboard
+        </button>
+
+        <button class="nav-item" data-view="analytics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Sensor Analytics
+        </button>
+
+        <button class="nav-item" data-view="details">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          Sensor Details
+        </button>
+
+        <button class="nav-item" data-view="servo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Servo History
+        </button>
+
+        <button class="nav-item" data-view="events">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Event Logs
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="device-chip">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Active Device:</span>
+          <span class="device-chip-id" id="sidebar-device-id">ESP32_001</span>
+        </div>
+        <button class="nav-item" id="btn-open-settings" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 16px; height: 16px;">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Settings & Config
+        </button>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         MAIN CONTENT AREA
+         ==================================================================== -->
+    <main class="main-layout">
+      
+      <!-- Top Sticky Navigation Bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle-btn" id="btn-menu-toggle" aria-label="Toggle Navigation">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div class="header-title-wrap">
+            <h2>IoT Sensor Monitoring System</h2>
+            <p>ESP32 Dual-Sensor & Commanded Servo Telemetry</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Live / Demo Indicator Badge -->
+          <div class="mode-badge demo-mode" id="header-mode-badge">
+            <span class="pulse-dot"></span>
+            <span>DEMO MODE</span>
+          </div>
+
+          <!-- Last Updated Timestamp -->
+          <div class="last-update-text tabular-nums" id="header-last-update">
+            Updated just now
+          </div>
+
+          <!-- Quick Mode Switcher -->
+          <button class="btn-secondary" id="btn-toggle-mode" title="Toggle Demo vs Live Mode">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"/>
+              <polyline points="23 20 23 14 17 14"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            Switch Mode
+          </button>
+
+          <!-- Settings Button -->
+          <button class="btn-icon" id="btn-header-settings" title="Open Settings & Calibration">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- System Notification Banners -->
+      <div class="banner-container">
+        <!-- Demo Mode Notice Banner -->
+        <div class="banner banner-demo" id="banner-demo">
+          <div class="banner-left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span><strong>DEMO MODE ACTIVE:</strong> Generating physically realistic simulated sensor readings and servo movements for offline verification. Real Firebase database is untouched.</span>
+          </div>
+          <button class="banner-action-btn" id="btn-banner-switch-mode">Configure Firebase Live</button>
+        </div>
+
+        <!-- Stale Data Warning Banner -->
+        <div class="banner banner-stale" id="banner-stale">
+          <div class="banner-left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span id="banner-stale-message">⚠️ Data is stale: No new readings received from ESP32. Displaying last known values.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================================================================
+           VIEW 1: MAIN DASHBOARD
+           ================================================================== -->
+      <section class="view-content tab-view active" id="view-dashboard">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Live Telemetry Overview</h2>
+            <p>Real-time sensor telemetry and autonomous commanded servo angles</p>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          
+          <!-- CARD A: TEMPERATURE (LM35) -->
+          <div class="card">
+            <div class="card-top">
+              <div class="card-title-group">
+                <div class="card-icon icon-temp">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                  </svg>
+                </div>
+                <div class="card-title-text">
+                  <h3>Temperature</h3>
+                  <span>LM35 Analog Sensor</span>
+                </div>
+              </div>
+              <span class="trend-indicator trend-steady" id="trend-temp">● Steady</span>
+            </div>
+
+            <div class="metric-row">
+              <span class="metric-value" id="val-temp">--.-</span>
+              <span class="metric-unit">°C</span>
+            </div>
+
+            <div class="progress-container">
+              <div class="progress-labels">
+                <span>0 °C</span>
+                <span>Scaled Range (0 - 50 °C)</span>
+                <span>50 °C</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-temp" id="fill-temp" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="card-bottom">
+              <span>Transfer Scale: 10 mV / °C</span>
+              <span class="tabular-nums" id="time-temp">--:--:--</span>
+            </div>
+          </div>
+
+          <!-- CARD B: LDR RAW ADC VALUE -->
+          <div class="card">
+            <div class="card-top">
+              <div class="card-title-group">
+                <div class="card-icon icon-ldr">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                </div>
+                <div class="card-title-text">
+                  <h3>LDR Raw Value</h3>
+                  <span>ESP32 ADC Count</span>
+                </div>
+              </div>
+              <span class="card-badge" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">12-bit ADC</span>
+            </div>
+
+            <div class="metric-row">
+              <span class="metric-value" id="val-ldr-raw">----</span>
+              <span class="metric-unit">counts</span>
+            </div>
+
+            <div class="progress-container">
+              <div class="progress-labels">
+                <span>0</span>
+                <span>Full Scale: 0 – 4095</span>
+                <span>4095</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-ldr" id="fill-ldr" style="width: 45%;"></div>
+              </div>
+            </div>
+
+            <div class="card-bottom">
+              <span>Voltage Equivalent: <strong id="val-ldr-voltage">-- V</strong></span>
+              <span class="tabular-nums" id="time-ldr">--:--:--</span>
+            </div>
+          </div>
+
+          <!-- CARD C: RELATIVE LIGHT INTENSITY -->
+          <div class="card">
+            <div class="card-top">
+              <div class="card-title-group">
+                <div class="card-icon icon-light">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                  </svg>
+                </div>
+                <div class="card-title-text">
+                  <h3>Light Intensity</h3>
+                  <span>Calibrated Relative %</span>
+                </div>
+              </div>
+              <span class="condition-pill condition-moderate" id="val-light-condition">MODERATE</span>
+            </div>
+
+            <div class="metric-row">
+              <span class="metric-value" id="val-light-pct">--</span>
+              <span class="metric-unit">%</span>
+            </div>
+
+            <div class="progress-container">
+              <div class="progress-labels">
+                <span>0% (Dark)</span>
+                <span>Threshold: &lt;30% Dark | &gt;70% Bright</span>
+                <span>100% (Bright)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-light" id="fill-light" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="card-bottom">
+              <span>Relative Brightness (Not Lux)</span>
+              <span class="tabular-nums" id="time-light">--:--:--</span>
+            </div>
+          </div>
+
+          <!-- CARD D: SERVO MOTOR 1 (AZIMUTH / PRIMARY) -->
+          <div class="card">
+            <div class="card-top">
+              <div class="card-title-group">
+                <div class="card-icon icon-servo1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 7v5l3 3"/>
+                  </svg>
+                </div>
+                <div class="card-title-text">
+                  <h3>Servo Motor 1</h3>
+                  <span>Commanded Angle</span>
+                </div>
+              </div>
+              <span class="servo-delta-tag" id="servo1-delta">Δ 0°</span>
+            </div>
+
+            <div class="servo-dial-container">
+              <svg class="servo-dial-svg" viewBox="0 0 200 120">
+                <!-- Gauge Background Arc (180 deg semicircle, r=70) -->
+                <path class="gauge-track" d="M 30 100 A 70 70 0 0 1 170 100" />
+                <!-- Gauge Progress Arc with stroke-dasharray ~220 -->
+                <path class="gauge-progress gauge-progress-1" id="servo1-progress" 
+                      d="M 30 100 A 70 70 0 0 1 170 100" 
+                      stroke-dasharray="220" 
+                      stroke-dashoffset="110" />
+                <!-- Needle -->
+                <line class="gauge-needle" id="servo1-needle" x1="100" y1="95" x2="100" y2="35" transform="rotate(0 100 95)" />
+                <circle class="gauge-needle-hub" cx="100" cy="95" r="7" />
+              </svg>
+              <div class="servo-ticks">
+                <span>0°</span>
+                <span>90°</span>
+                <span>180°</span>
+              </div>
+              <div class="servo-angle-display">
+                <span class="servo-angle-text" id="val-servo1-angle">90°</span>
+              </div>
+            </div>
+
+            <div class="card-bottom">
+              <span>ESP32 Target Command</span>
+              <span>Valid Range: 0° – 180°</span>
+            </div>
+          </div>
+
+          <!-- CARD E: SERVO MOTOR 2 (ELEVATION / SECONDARY) -->
+          <div class="card">
+            <div class="card-top">
+              <div class="card-title-group">
+                <div class="card-icon icon-servo2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 7v5l3 3"/>
+                  </svg>
+                </div>
+                <div class="card-title-text">
+                  <h3>Servo Motor 2</h3>
+                  <span>Commanded Angle</span>
+                </div>
+              </div>
+              <span class="servo-delta-tag" id="servo2-delta">Δ 0°</span>
+            </div>
+
+            <div class="servo-dial-container">
+              <svg class="servo-dial-svg" viewBox="0 0 200 120">
+                <path class="gauge-track" d="M 30 100 A 70 70 0 0 1 170 100" />
+                <path class="gauge-progress gauge-progress-2" id="servo2-progress" 
+                      d="M 30 100 A 70 70 0 0 1 170 100" 
+                      stroke-dasharray="220" 
+                      stroke-dashoffset="165" />
+                <line class="gauge-needle" id="servo2-needle" x1="100" y1="95" x2="100" y2="35" transform="rotate(-45 100 95)" />
+                <circle class="gauge-needle-hub" cx="100" cy="95" r="7" />
+              </svg>
+              <div class="servo-ticks">
+                <span>0°</span>
+                <span>90°</span>
+                <span>180°</span>
+              </div>
+              <div class="servo-angle-display">
+                <span class="servo-angle-text" id="val-servo2-angle">45°</span>
+              </div>
+            </div>
+
+            <div class="card-bottom">
+              <span>ESP32 Target Command</span>
+              <span>Valid Range: 0° – 180°</span>
+            </div>
+          </div>
+
+          <!-- CARD F: DEVICE HEALTH & STATUS -->
+          <div class="card">
+            <div class="card-top">
+              <div class="card-title-group">
+                <div class="card-icon icon-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                    <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                    <line x1="12" y1="20" x2="12.01" y2="20"/>
+                  </svg>
+                </div>
+                <div class="card-title-text">
+                  <h3>Device Health</h3>
+                  <span>Hardware Link & Heartbeat</span>
+                </div>
+              </div>
+              <span class="card-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">Active</span>
+            </div>
+
+            <div class="health-status-list">
+              <div class="health-item">
+                <span>Telemetry Feed:</span>
+                <span id="val-health-mode">Demo (Simulation)</span>
+              </div>
+              <div class="health-item">
+                <span>Link State:</span>
+                <span id="val-health-state" style="color: #34d399;">Normal / Streaming</span>
+              </div>
+              <div class="health-item">
+                <span>Stale Threshold:</span>
+                <span>&gt; 60 seconds</span>
+              </div>
+              <div class="health-item">
+                <span>Last Telemetry:</span>
+                <span id="val-health-timestamp" class="tabular-nums">--</span>
+              </div>
+            </div>
+
+            <div class="card-bottom">
+              <span>Autonomous ESP32 Control</span>
+              <span>Website is Read-Only</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 2: SENSOR ANALYTICS
+           ================================================================== -->
+      <section class="view-content tab-view" id="view-analytics">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Sensor & Servo Analytics</h2>
+            <p>Interactive telemetry charts and dynamic response correlation</p>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="analytics-toolbar">
+          <div class="filter-group">
+            <button class="filter-btn" data-filter="1h">1 Hour</button>
+            <button class="filter-btn" data-filter="6h">6 Hours</button>
+            <button class="filter-btn active" data-filter="24h">24 Hours</button>
+            <button class="filter-btn" data-filter="7d">7 Days</button>
+          </div>
+          <div class="analytics-meta">
+            <span id="analytics-records-count">Showing historical records</span>
+            <button class="btn-secondary" id="btn-refresh-analytics">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+          
+          <!-- Chart 1: Temperature vs Time -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Temperature vs Time (°C)</h3>
+                <p>LM35 precision centigrade thermal reading</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-temp"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: LDR Raw ADC vs Time -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>LDR Raw Reading vs Time (ADC Counts)</h3>
+                <p>Direct 12-bit ADC digitization (0 - 4095)</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-ldr-raw"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 3: Relative Light Intensity vs Time -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Relative Light Intensity vs Time (%)</h3>
+                <p>Calibrated relative brightness percentage</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-light-pct"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 4: Servo 1 Angle vs Time -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Servo Motor 1 Commanded Angle vs Time</h3>
+                <p>Primary horizontal tracking axis (0° – 180°)</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-servo1"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 5: Servo 2 Angle vs Time -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Servo Motor 2 Commanded Angle vs Time</h3>
+                <p>Secondary vertical elevation axis (0° – 180°)</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-servo2"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 6: Combined Correlation Chart (Dual Y-Axes) -->
+          <div class="chart-card full-width">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Combined Light Intensity & Servo Commanded Response</h3>
+                <p>Dual Y-Axis correlation: Light (%) on Left vs Commanded Servo Angles (°) on Right</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-combined"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 3: SENSOR DETAILS & PHYSICS
+           ================================================================== -->
+      <section class="view-content tab-view" id="view-details">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Sensor Principles & Calibration Details</h2>
+            <p>Hardware specifications, conversion math, and measurement considerations</p>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          
+          <!-- LM35 Temperature Deep Dive -->
+          <div class="details-card">
+            <div class="details-header">
+              <div>
+                <h3 style="font-size: 1.1rem; color: #f87171;">LM35 Temperature Sensor</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Precision Linear Centigrade Thermal Transducer</p>
+              </div>
+              <span class="card-badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">Analog Output</span>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="details-stats-row">
+              <div class="stat-box">
+                <div class="stat-label">Current</div>
+                <div class="stat-value" id="detail-lm35-current">--.- °C</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Minimum</div>
+                <div class="stat-value" id="detail-lm35-min">--.- °C</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Maximum</div>
+                <div class="stat-value" id="detail-lm35-max">--.- °C</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Average</div>
+                <div class="stat-value" id="detail-lm35-avg">--.- °C</div>
+              </div>
+            </div>
+
+            <!-- Technical Info Block -->
+            <div class="tech-info-block">
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Voltage to Temperature Transfer Function
+              </h4>
+              <p>The LM35 produces an output voltage that is linearly proportional to the Celsius temperature at a rate of exactly 10 mV/°C (0.010 V/°C).</p>
+              <div class="formula-box">
+                V_out (Volts) = (ADC_Count / 4095) * V_ref<br>
+                Temp (°C) = (V_out * 1000 mV / 10 mV/°C) + Offset
+              </div>
+              <p>For example, 250 mV corresponds directly to 25.0 °C. The ESP32 ADC reads this analog voltage on an assigned ADC pin (e.g., GPIO 34 / 35 / 36 / 39).</p>
+            </div>
+
+            <!-- Notice / Limitations -->
+            <div class="notice-alert notice-warning">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div>
+                <strong>ESP32 ADC Linearity Note:</strong> The ESP32 built-in SAR ADC is notoriously non-linear below ~100 mV and near ~3.1 V (at 11 dB attenuation). Temperatures below 10 °C produce voltages near the dead zone (&lt;100 mV). Applying ADC curve calibration in Arduino code or using multi-sample averaging improves accuracy.
+              </div>
+            </div>
+          </div>
+
+          <!-- LDR Sensor Deep Dive -->
+          <div class="details-card">
+            <div class="details-header">
+              <div>
+                <h3 style="font-size: 1.1rem; color: #22d3ee;">LDR (Light Dependent Resistor)</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Photo-Conductive Cadmium Sulfide (CdS) Cell</p>
+              </div>
+              <span class="card-badge" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">Voltage Divider</span>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="details-stats-row">
+              <div class="stat-box">
+                <div class="stat-label">Current ADC</div>
+                <div class="stat-value" id="detail-ldr-current">----</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Minimum ADC</div>
+                <div class="stat-value" id="detail-ldr-min">----</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Maximum ADC</div>
+                <div class="stat-value" id="detail-ldr-max">----</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Average ADC</div>
+                <div class="stat-value" id="detail-ldr-avg">----</div>
+              </div>
+            </div>
+
+            <!-- Technical Info Block -->
+            <div class="tech-info-block" style="border-left-color: #22d3ee;">
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Voltage Divider & Relative Percentage Calibration
+              </h4>
+              <p>The LDR resistance decreases exponentially as ambient photon flux increases. In a voltage divider circuit with a fixed resistor (R_fixed, typically 10 kΩ):</p>
+              <div class="formula-box">
+                V_out = V_in * [ R_fixed / (R_ldr + R_fixed) ]<br>
+                Light (%) = Clamp(0, 100, (Dark_ADC - Raw_ADC) / (Dark_ADC - Bright_ADC) * 100)
+              </div>
+              <p>Configurable reference readings (Dark = 3800, Bright = 350) scale the output into an intuitive 0% to 100% relative brightness indicator.</p>
+            </div>
+
+            <!-- Notice on Lux -->
+            <div class="notice-alert notice-info">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <div>
+                <strong>Scientific Rigor: Why Not Lux?</strong> Standard CdS photoresistors have non-linear logarithmic resistance curves and vary significantly by manufacturing batch and ambient temperature. Reporting calibrated relative brightness (%) is technically honest; calculating true Lux without an optical lux-meter calibration curve is misleading.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 4: SERVO MOVEMENT HISTORY
+           ================================================================== -->
+      <section class="view-content tab-view" id="view-servo">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Servo Movement History</h2>
+            <p>Chronological record of commanded target angles and correlated light conditions</p>
+          </div>
+          <button class="btn-secondary" id="btn-export-csv">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export Telemetry CSV
+          </button>
+        </div>
+
+        <div class="servo-history-container">
+          
+          <!-- Summary Strip -->
+          <div class="stats-summary-strip">
+            <div class="strip-card">
+              <div class="strip-icon" style="background: rgba(139, 92, 246, 0.15); color: #a78bfa;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div class="strip-info">
+                <h4>Total Movements Recorded</h4>
+                <p id="servo-total-movements">0</p>
+              </div>
+            </div>
+
+            <div class="strip-card">
+              <div class="strip-icon" style="background: rgba(139, 92, 246, 0.15); color: #a78bfa;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+              </div>
+              <div class="strip-info">
+                <h4>Servo 1 Range</h4>
+                <p>0° – 180°</p>
+              </div>
+            </div>
+
+            <div class="strip-card">
+              <div class="strip-icon" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+              </div>
+              <div class="strip-info">
+                <h4>Servo 2 Range</h4>
+                <p>0° – 180°</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hobby Servo Closed-Loop Feedback Notice -->
+          <div class="notice-alert notice-info">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div>
+              <strong>Hardware Transparency:</strong> Standard 3-wire hobby servos (SG90, MG90S, MG996R) take 50Hz PWM signals and do not contain physical position feedback potentiometers connected to the microcontroller. The angles displayed below are the <em>commanded target positions</em> calculated by the ESP32 control logic, rather than independently measured physical shaft encoders.
+            </div>
+          </div>
+
+          <!-- Interactive Timeline Chart -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Commanded Servo Angular Transitions Timeline</h3>
+                <p>Chronological step plot showing both motor target angles over time</p>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="ctx-chart-servo-history"></canvas>
+            </div>
+          </div>
+
+          <!-- Data Table Card -->
+          <div class="data-table-card">
+            <div class="table-toolbar">
+              <h3 style="font-size: 0.95rem; font-weight: 600;">Commanded Movement Records</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Displaying latest movement transitions</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Servo 1 Commanded</th>
+                    <th>Servo 2 Commanded</th>
+                    <th>Associated LDR Raw</th>
+                    <th>Light Intensity</th>
+                    <th>Light Condition</th>
+                    <th>Angle Delta</th>
+                  </tr>
+                </thead>
+                <tbody id="servo-history-tbody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 5: EVENT LOGS
+           ================================================================== -->
+      <section class="view-content tab-view" id="view-events">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Device Event Logs</h2>
+            <p>Significant threshold crossings, condition transitions, and system events</p>
+          </div>
+        </div>
+
+        <div class="events-container">
+          <!-- Filter Toolbar -->
+          <div class="analytics-toolbar" style="margin-bottom: 0;">
+            <div class="filter-group">
+              <button class="filter-btn event-filter-btn active" data-category="all">All Events</button>
+              <button class="filter-btn event-filter-btn" data-category="light">Light Transitions</button>
+              <button class="filter-btn event-filter-btn" data-category="servo">Servo Movements</button>
+              <button class="filter-btn event-filter-btn" data-category="threshold">Threshold Alerts</button>
+              <button class="filter-btn event-filter-btn" data-category="system">System Link</button>
+            </div>
+          </div>
+
+          <!-- Events List Container -->
+          <div class="events-list" id="events-list-container">
+            <!-- Dynamically populated via App.renderEventsList() -->
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state-chart" id="events-empty-state" style="display: none; padding: 4rem 1rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <h3 style="font-size: 1rem; color: var(--text-secondary);">No events recorded in this category</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">State changes and threshold warnings will appear here automatically.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ====================================================================
+       SETTINGS & CALIBRATION MODAL
+       ==================================================================== -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Configuration & Calibration</h3>
+        <button class="btn-icon" id="btn-close-modal" aria-label="Close Modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="tab-settings-general">Firebase Setup</button>
+        <button class="modal-tab-btn" data-tab="tab-settings-calibration">Sensor Calibration</button>
+        <button class="modal-tab-btn" data-tab="tab-settings-about">Hardware Guide</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Tab 1: Firebase Configuration -->
+        <div class="modal-tab-content" id="tab-settings-general" style="display: flex; flex-direction: column; gap: 1rem;">
+          <p class="form-hint">Configure Firebase Realtime Database credentials for Live streaming mode. Leave as placeholders to keep using safe Demo Mode.</p>
+          
+          <div class="form-group">
+            <label for="cfg-fb-deviceid">Target Device Identifier</label>
+            <input type="text" id="cfg-fb-deviceid" class="form-input" placeholder="e.g. ESP32_001" value="ESP32_001">
+            <span class="form-hint">Matches the Firebase path: devices/{deviceId}/current</span>
+          </div>
+
+          <div class="form-group">
+            <label for="cfg-fb-dburl">Realtime Database URL</label>
+            <input type="text" id="cfg-fb-dburl" class="form-input" placeholder="https://YOUR_PROJECT-default-rtdb.firebaseio.com">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-fb-apikey">Web API Key</label>
+              <input type="password" id="cfg-fb-apikey" class="form-input" placeholder="AIzaSy...">
+            </div>
+            <div class="form-group">
+              <label for="cfg-fb-projectid">Project ID</label>
+              <input type="text" id="cfg-fb-projectid" class="form-input" placeholder="my-iot-project">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cfg-fb-authdomain">Auth Domain (Optional)</label>
+            <input type="text" id="cfg-fb-authdomain" class="form-input" placeholder="my-iot-project.firebaseapp.com">
+          </div>
+        </div>
+
+        <!-- Tab 2: Calibration Parameters -->
+        <div class="modal-tab-content" id="tab-settings-calibration" style="display: none; flex-direction: column; gap: 1rem;">
+          <p class="form-hint">Fine-tune the mathematical conversion parameters according to your specific hardware resistor values and ESP32 board calibration.</p>
+
+          <h4 style="font-size: 0.85rem; color: #f87171; text-transform: uppercase;">LM35 Temperature Parameters</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-lm35-vref">ADC Reference Voltage (V)</label>
+              <input type="number" step="0.01" id="cfg-lm35-vref" class="form-input" value="3.3">
+              <span class="form-hint">ESP32 nominal 3.30V (or measured rail voltage)</span>
+            </div>
+            <div class="form-group">
+              <label for="cfg-lm35-offset">Temperature Offset (°C)</label>
+              <input type="number" step="0.1" id="cfg-lm35-offset" class="form-input" value="0.0">
+              <span class="form-hint">Calibration offset (+/- °C)</span>
+            </div>
+          </div>
+
+          <h4 style="font-size: 0.85rem; color: #22d3ee; text-transform: uppercase; margin-top: 0.5rem;">LDR Calibration Bounds</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-ldr-dark">Dark ADC Reading (Covered)</label>
+              <input type="number" id="cfg-ldr-dark" class="form-input" value="3800">
+            </div>
+            <div class="form-group">
+              <label for="cfg-ldr-bright">Bright ADC Reading (Direct Light)</label>
+              <input type="number" id="cfg-ldr-bright" class="form-input" value="350">
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="cfg-ldr-invert">
+            <label for="cfg-ldr-invert" style="font-size: 0.8rem; cursor: pointer;">
+              Invert Polarity (Check if higher ADC reading represents brighter light)
+            </label>
+          </div>
+
+          <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-top: 0.5rem;">System Health Thresholds</h4>
+          <div class="form-group">
+            <label for="cfg-stale-timeout">Stale Data Timeout (Seconds)</label>
+            <input type="number" id="cfg-stale-timeout" class="form-input" value="60">
+            <span class="form-hint">Mark data as stale if no updates received within this time</span>
+          </div>
+        </div>
+
+        <!-- Tab 3: Hardware Diagnostics / Notes -->
+        <div class="modal-tab-content" id="tab-settings-about" style="display: none; flex-direction: column; gap: 1rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+          <h4 style="color: var(--text-primary);">Integration Architecture Overview</h4>
+          <p>This website is architected for non-invasive integration with your ESP32 Arduino sketch:</p>
+          <ul style="padding-left: 1.25rem;">
+            <li><strong>Autonomous Device:</strong> The ESP32 retains 100% control over the servo motors. The website does NOT send motor commands.</li>
+            <li><strong>Decoupled Telemetry:</strong> If the website is closed or internet drops, the ESP32 keeps operating its sensor and servo loop locally.</li>
+            <li><strong>Realtime Database:</strong> Readings are published by the ESP32 over HTTPS / WebSocket to Firebase Realtime Database.</li>
+          </ul>
+          <p>Refer to <code style="font-family: var(--font-mono); color: var(--accent-cyan);">HARDWARE_INTEGRATION.md</code> in the project directory for the exact non-blocking Arduino code template.</p>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-reset-defaults">Reset to Defaults</button>
+        <button class="btn-primary" id="btn-save-settings">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/sensor-calculations.js"></script>
+  <script src="js/demo-service.js"></script>
+  <script src="js/firebase-service.js"></script>
+  <script src="js/charts-manager.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
