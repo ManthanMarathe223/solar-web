@@ -410,48 +410,42 @@
             </div>
           </div>
 
-          <!-- CARD F: DEVICE HEALTH & STATUS -->
+          <!-- CARD F: SOLAR PANEL VOLTAGE -->
           <div class="card">
             <div class="card-top">
               <div class="card-title-group">
                 <div class="card-icon icon-status">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-                    <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-                    <line x1="12" y1="20" x2="12.01" y2="20"/>
+                    <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>
                   </svg>
                 </div>
                 <div class="card-title-text">
-                  <h3>Device Health</h3>
-                  <span>Hardware Link & Heartbeat</span>
+                  <h3>Solar Panel Voltage</h3>
+                  <span>Generated Electrical Output</span>
                 </div>
               </div>
-              <span class="card-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">Active</span>
+              <span class="trend-indicator trend-steady">● Live</span>
             </div>
 
-            <div class="health-status-list">
-              <div class="health-item">
-                <span>Telemetry Feed:</span>
-                <span id="val-health-mode">Demo (Simulation)</span>
+            <div class="metric-row">
+              <span class="metric-value" id="val-solar-voltage">--.-</span>
+              <span class="metric-unit">V</span>
+            </div>
+
+            <div class="progress-container">
+              <div class="progress-labels">
+                <span>0 V</span>
+                <span>Scaled Range (0 - 12 V)</span>
+                <span>12 V</span>
               </div>
-              <div class="health-item">
-                <span>Link State:</span>
-                <span id="val-health-state" style="color: #34d399;">Normal / Streaming</span>
-              </div>
-              <div class="health-item">
-                <span>Stale Threshold:</span>
-                <span>&gt; 60 seconds</span>
-              </div>
-              <div class="health-item">
-                <span>Last Telemetry:</span>
-                <span id="val-health-timestamp" class="tabular-nums">--</span>
+              <div class="progress-track">
+                <div class="progress-fill fill-temp" id="fill-voltage" style="width: 0%;"></div>
               </div>
             </div>
 
             <div class="card-bottom">
-              <span>Autonomous ESP32 Control</span>
-              <span>Website is Read-Only</span>
+              <span>Solar Panel Output</span>
+              <span>Maximum: 12 V</span>
             </div>
           </div>
 
