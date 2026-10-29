@@ -131,6 +131,11 @@ const SensorCalculations = {
       temperatureC = Number(temperatureC.toFixed(1));
     }
 
+    let solarVoltage = Number(record.solarVoltage);
+    if (!Number.isFinite(solarVoltage)) {
+      solarVoltage = 0.0;
+    }
+
     // Servo commanded angles (0 - 180)
     const servo1Angle = this.clampServoAngle(record.servo1Angle);
     const servo2Angle = this.clampServoAngle(record.servo2Angle);
@@ -149,6 +154,7 @@ const SensorCalculations = {
       ldrRaw: rawAdc,
       lightPercentage,
       lightCondition,
+      solarVoltage,
       servo1Angle,
       servo2Angle,
       timestamp,

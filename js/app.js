@@ -322,20 +322,19 @@ const App = {
     // 5. CARD E: SERVO 2 COMMANDED ANGLE
     this.updateServoDial(2, record.servo2Angle);
 
-    // 6. CARD F: DEVICE STATUS & TIMESTAMPS
+    // 6. CARD F: SOLAR PANEL VOLTAGE
     const lastUpdateHeader = document.getElementById("header-last-update");
     if (lastUpdateHeader) {
       lastUpdateHeader.textContent = `Updated ${SensorCalculations.formatRelativeTime(record.timestamp)}`;
     }
 
-    const healthStatusEl = document.getElementById("val-health-state");
-    const healthTimeEl = document.getElementById("val-health-timestamp");
-    const healthModeEl = document.getElementById("val-health-mode");
+    const solarVoltageEl = document.getElementById("val-solar-voltage");
+    const solarVoltageBarEl = document.getElementById("fill-voltage");
 
-    if (healthStatusEl) healthStatusEl.textContent = "Normal / Streaming";
-    if (healthTimeEl) healthTimeEl.textContent = SensorCalculations.formatDateTime(record.timestamp);
-    if (healthModeEl) {
-      healthModeEl.textContent = AppConfig.get().isDemoMode ? "Demo (Simulation)" : "Live (ESP32)";
+    if (solarVoltageEl) solarVoltageEl.textContent = record.solarVoltage.toFixed(2);
+    if (solarVoltageBarEl) {
+      const voltagePct = Math.max(0, Math.min(100, (record.solarVoltage / 12) * 100));
+      solarVoltageBarEl.style.width = `${voltagePct}%`;
     }
   },
 
@@ -402,7 +401,6 @@ const App = {
     const banner = document.getElementById("banner-stale");
     const bannerMsg = document.getElementById("banner-stale-message");
     const badge = document.getElementById("header-mode-badge");
-    const healthStatusEl = document.getElementById("val-health-state");
 
     if (isStale) {
       if (banner) banner.classList.add("visible");
@@ -413,7 +411,6 @@ const App = {
         badge.className = "mode-badge live-stale";
         badge.innerHTML = `<span class="pulse-dot"></span> LIVE (STALE)`;
       }
-      if (healthStatusEl) healthStatusEl.textContent = "Data Stale (Device Offline?)";
     } else {
       if (banner) banner.classList.remove("visible");
       const config = AppConfig.get();
